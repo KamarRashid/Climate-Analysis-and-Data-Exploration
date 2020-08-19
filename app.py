@@ -1,9 +1,8 @@
-# import Modules
+# Import Modules
 import numpy as np
 import pandas as pd
 import datetime as dt
 from flask import Flask, jsonify
-
 
 # Python SQL toolkit and Object Relational Mapper
 import sqlalchemy
@@ -44,9 +43,19 @@ def welcome():
 
 @app.route("/api/v1.0/precipitation")
 def precipitation():
-    return(
-        "test"
-    )
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+    # Calculate the date 1 year ago from the last data point in thedatabase
+    last_date = session.query(Measurement.date).order_by(Measurement.date.desc()).first()
+    # last_date = dt.datetime.strptime(last_date, "%y-%m-%d")
+    
+    query_date = dt.date(2017, 8, 23) - dt.timedelta(days=365)
+    
+    # Perform a query to retrieve the data and precipitation scores
+    last_year_prcp = session.query(Measurement.date, Measurement.prcp).filter(Measurement.date >= query_date).all()
+
+    last_year_prcp_list = list(np.ravel(last_year_prcp))    
+    return jsonify(last_year_prcp_list)
 
 if __name__ == '__main__':
     app.run(debug=True)
